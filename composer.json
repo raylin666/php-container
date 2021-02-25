@@ -1,0 +1,38 @@
+{
+    "name": "raylin666/container",
+    "description": "Object Container Services",
+    "keywords": [
+        "sdk",
+        "container",
+        "raylin666",
+        "ioc",
+        "php",
+        "object",
+        "make"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/raylin666/container",
+    "authors": [
+        {
+            "name": "raylin666",
+            "email": "1099013371@qq.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.2",
+        "raylin666/contract": "^1.0"
+    },
+    "require-dev": {},
+    "autoload": {
+        "files": [],
+        "psr-4": {
+            "Raylin666\\Container\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {}
+    },
+    "packages": {},
+    "packages-dev": {}
+}
