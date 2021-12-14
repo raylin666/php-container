@@ -68,9 +68,7 @@ trait Parameters
     {
         $type = $parameter->getType();
 
-        if (! $type instanceof ReflectionNamedType || $type->isBuiltin()) {
-            return;
-        }
+        if (! $type instanceof ReflectionNamedType || $type->isBuiltin()) return;
 
         $name = $type->getName();
 
@@ -100,9 +98,7 @@ trait Parameters
             return $parameter->getDefaultValue();
         }
 
-        if ($parameter->isOptional()) {
-            return ;
-        }
+        if ($parameter->isOptional()) return;
 
         $message = $parameter->getDeclaringClass()
             ? "Unresolvable dependency resolving [$parameter] in class {$parameter->getDeclaringClass()->getName()}"
@@ -152,9 +148,7 @@ trait Parameters
      */
     protected function hasParameterOverride(ReflectionParameter $dependency)
     {
-        return array_key_exists(
-            $dependency->name, $this->parametersStack
-        );
+        return array_key_exists($dependency->name, $this->parametersStack);
     }
 
     /**

@@ -1,6 +1,6 @@
 {
     "name": "raylin666/container",
-    "description": "Object Container Services",
+    "description": "IOC object container service",
     "keywords": [
         "sdk",
         "container",
@@ -8,7 +8,7 @@
         "ioc",
         "php",
         "object",
-        "make"
+        "di"
     ],
     "type": "library",
     "license": "MIT",

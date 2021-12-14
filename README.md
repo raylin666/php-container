@@ -1,6 +1,6 @@
-# Object Container Services
+# IOC 对象容器服务
 
-[![GitHub release](https://img.shields.io/github/release/raylin666/container.svg)](https://github.com/raylin666/container/releases)
+[![GitHub release](https://img.shields.io/github/v/release/raylin666/php-container.svg)](https://github.com/raylin666/php-container/releases)
 [![PHP version](https://img.shields.io/badge/php-%3E%207.2-orange.svg)](https://github.com/php/php-src)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](#LICENSE)
 
@@ -25,23 +25,27 @@ require_once 'vendor/autoload.php';
 use Raylin666\Container\Container;
 use Raylin666\Container\ContainerFactory;
 
-$container = (new ContainerFactory(new Container()))->getContainer();
+$container = ContainerFactory::getContainer();
 
+// 绑定容器
 $container->bind(DateTime::class, DateTime::class);
 
+// 是否有绑定该容器
 $container->has(DateTime::class);
 
+// 实例化容器
 $container->make(DateTime::class, ['timezone' => new DateTimeZone('UTC')]);
 
 $container->bind('datetimezone', function () {
     return new DateTimeZone('UTC');
 });
 
+// 获取容器, 优先查看是否有已实例化的容器, 如果有则直接取出, 如果没有则实例化容器(make)并返回
 $container->get('datetimezone');
+// 为容器设置别名, 一般情况下该别名可用来作为装饰者, 因为本身就是装饰器设计模式, 比如 laravel 的 alias 就类似该原理
+$container->alias('tzone', 'datetimezone');
 
-$container->alias('dtzone', 'datetimezone');
-
-$container->get('dtzone');
+$container->get('tzone');
 
 $container->bind(DateTimeZone::class, DateTimeZone::class);
 

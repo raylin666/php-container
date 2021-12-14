@@ -75,17 +75,16 @@ class Container implements ContainerInterface
 
         $this->forgetInstance($abstract);
 
-        if (is_null($concrete)) {
-            $concrete = $abstract;
-        }
+        is_null($concrete) && $concrete = $abstract;
 
         if (! $concrete instanceof Closure) {
+            // $concrete 只能是 Closure|string|null 数据类型
             if (! is_string($concrete)) {
-                throw new TypeError(self::class.'::bind(): Argument #2 ($concrete) must be of type Closure|string|null');
+                throw new TypeError(self::class . '::bind(): Argument #2 ($concrete) must be of type Closure|string|null');
             }
 
             // 组装成一个闭包
-            $concrete = $this->getClosure($abstract, $concrete);
+            $concrete = $this->generateClosure($abstract, $concrete);
         }
 
         $this->bindings[$abstract] = compact('concrete', 'singleton');
@@ -98,9 +97,7 @@ class Container implements ContainerInterface
      */
     public function bindIf($abstract, $concrete = null)
     {
-        if (! $this->has($abstract)) {
-            $this->bind($abstract, $concrete);
-        }
+        ($this->has($abstract) == false) && $this->bind($abstract, $concrete);
     }
 
     /**
@@ -123,9 +120,7 @@ class Container implements ContainerInterface
      */
     public function singletonIf($abstract, $concrete = null)
     {
-        if (! $this->has($abstract)) {
-            $this->bind($abstract, $concrete, true);
-        }
+        ($this->has($abstract) == false) && $this->bind($abstract, $concrete, true);
     }
 
     /**
@@ -137,9 +132,7 @@ class Container implements ContainerInterface
     {
         // TODO: Implement has() method.
 
-        return isset($this->bindings[$id])
-            || isset($this->instances[$id])
-            || $this->isAlias($id);
+        return isset($this->bindings[$id]) || isset($this->instances[$id]) || $this->isAlias($id);
     }
 
     /**
@@ -155,10 +148,7 @@ class Container implements ContainerInterface
         try {
             return $this->make($id);
         } catch (Exception $e) {
-            if ($this->has($id)) {
-                throw $e;
-            }
-
+            if ($this->has($id)) throw $e;
             throw new NotFoundException($id, $e->getCode(), $e);
         }
     }
@@ -177,19 +167,16 @@ class Container implements ContainerInterface
 
         $abstract = $this->getAlias($abstract);
 
-        if (isset($this->instances[$abstract])) {
-            return $this->instances[$abstract];
+        // array_key_exists - $key 参数只能是 int|string|null
+        if (is_numeric($abstract) || is_string($abstract) || is_null($abstract)) {
+            if (array_key_exists($abstract, $this->instances)) return $this->instances[$abstract];
         }
 
         $this->parametersStack = $parameters;
 
         $concrete = $this->getConcrete($abstract);
 
-        if ($this->isBuildable($concrete, $abstract)) {
-            $object = $this->build($concrete);
-        } else {
-            $object = $this->make($concrete);
-        }
+        $object = $this->isBuildable($concrete, $abstract) ? $this->build($concrete) : $this->make($concrete);
 
         if ($this->isSingleton($abstract)) {
             $this->instances[$abstract] = $object;
@@ -273,11 +260,7 @@ class Container implements ContainerInterface
      */
     public function build($concrete)
     {
-        if ($concrete instanceof Closure) {
-            return $this->reflectorFunction($concrete);
-        }
-
-        return $this->reflectorClass($concrete);
+        return ($concrete instanceof Closure) ? $this->reflectorFunction($concrete) : $this->reflectorClass($concrete);
     }
 
     /**
@@ -305,9 +288,9 @@ class Container implements ContainerInterface
     /**
      * 设置别名
      * @param string $alias
-     * @param string $abstract
+     * @param $abstract
      */
-    public function alias(string $alias, string $abstract)
+    public function alias(string $alias, $abstract)
     {
         if ($alias === $abstract) {
             throw new LogicException("[{$abstract}] is aliased to itself.");
@@ -337,25 +320,22 @@ class Container implements ContainerInterface
     }
 
     /**
-     * clear all container
+     * clear all containers
      */
     public function flush()
     {
-        $this->bindings = [];
-        $this->resolved = [];
-        $this->providers = [];
-        $this->instances = [];
-        $this->alias = [];
+        $this->bindings = $this->resolved = $this->providers = $this->instances = $this->alias = [];
     }
 
     /**
-     * 获取生成类型时要使用的闭包
+     * 获取生成类型时要使用的闭包, 对应 parseClosure 方法
      * @param string $abstract
      * @param string $concrete
      * @return Closure
      */
-    protected function getClosure($abstract, $concrete)
+    protected function generateClosure($abstract, $concrete)
     {
+        /** @var $container ContainerInterface */
         return function ($container, $parameters = []) use ($abstract, $concrete) {
             if ($abstract == $concrete) {
                 return $container->build($concrete);
@@ -366,15 +346,25 @@ class Container implements ContainerInterface
     }
 
     /**
+     * 解析生成类型时对应的闭包, 对应 generateClosure 方法
+     * @param Closure            $concrete
+     * @param ContainerInterface $container
+     * @param array              $parameters
+     * @return mixed
+     */
+    protected function parseClosure(Closure $concrete, ContainerInterface $container, array $parameters = [])
+    {
+        return $concrete($container, $parameters);
+    }
+
+    /**
      * 获取具体实例对象
      * @param string $abstract
      * @return mixed
      */
     protected function getConcrete($abstract)
     {
-        return is_string($abstract) && isset($this->bindings[$abstract])
-            ? $this->bindings[$abstract]['concrete']
-            : $abstract;
+        return (is_string($abstract) && isset($this->bindings[$abstract])) ? $this->bindings[$abstract]['concrete'] : $abstract;
     }
 
     /**
@@ -385,7 +375,7 @@ class Container implements ContainerInterface
      */
     protected function isBuildable($concrete, $abstract)
     {
-        return $concrete === $abstract || $concrete instanceof Closure;
+        return ($concrete === $abstract) || ($concrete instanceof Closure);
     }
 
     /**
@@ -419,7 +409,6 @@ class Container implements ContainerInterface
 
         // 获取构造函数
         $constructor = $reflector->getConstructor();
-
         if (is_null($constructor)) {
             return $reflector->newInstance();
         }
@@ -439,13 +428,13 @@ class Container implements ContainerInterface
     }
 
     /**
-     * 解析方法Closure实例
+     * 解析方法 Closure 实例
      * @param Closure $concrete
      * @return mixed
      */
     protected function reflectorFunction(Closure $concrete)
     {
-        return $concrete($this, $this->parametersStack);
+        return $this->parseClosure($concrete, $this, $this->parametersStack);
     }
 
     /**

@@ -34,17 +34,13 @@ trait Method
     protected function callClass($target, array $parameters = [], $defaultMethod = null)
     {
         $segments = explode('@', $target);
-
-        $method = count($segments) === 2
-            ? $segments[1] : $defaultMethod;
-
+        
+        $method = count($segments) === 2 ? $segments[1] : $defaultMethod;
         if (is_null($method)) {
             throw new InvalidArgumentException('Method not provided.');
         }
 
-        return $this->call(
-            [$this->make($segments[0]), $method], $parameters
-        );
+        return $this->call([$this->make($segments[0]), $method], $parameters);
     }
 
     /**
