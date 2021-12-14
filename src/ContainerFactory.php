@@ -35,11 +35,13 @@ class ContainerFactory implements FactoryInterface
     }
 
     /**
+     * @param bool $notHasGenerate  当容器不存在时, 是否生成默认初始化容器
      * @return ContainerInterface
      */
-    public static function getContainer(): ContainerInterface
+    public static function getContainer(bool $notHasGenerate = true): ContainerInterface
     {
-        return self::$container;
+        // 如果不实例化该类, 并直接通过 static::getContainer 方法获取容器时, 可选择是否自动初始化容器
+        return (empty(self::hasContainer()) && $notHasGenerate) ? self::setContainer(make(Container::class)) : self::$container;
     }
 
     /**
@@ -56,7 +58,6 @@ class ContainerFactory implements FactoryInterface
      */
     public static function setContainer(ContainerInterface $container): ContainerInterface
     {
-        self::$container = $container;
-        return self::$container;
+        return self::$container = $container;
     }
 }
